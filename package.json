@@ -1,0 +1,9 @@
+{
+  "name": "ai-study-notes-generator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI Study Notes Generator - BCA Generative AI & Prompt Engineering project",
+  "engines": {
+    "node": ">=18"
+  }
+}
