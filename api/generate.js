@@ -1,9 +1,6 @@
 /**
  * Vercel serverless function.
  * Deployed automatically at: /api/generate
- *
- * Holds the AI provider's API key via Vercel Environment Variables
- * (Project Settings -> Environment Variables) — never exposed to the browser.
  */
 
 const PROVIDER = (process.env.AI_PROVIDER || "anthropic").toLowerCase();
@@ -30,7 +27,7 @@ async function callAnthropic(prompt) {
 }
 
 async function callGemini(prompt) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(API_KEY)}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(API_KEY)}`;
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -63,12 +60,31 @@ async function callOpenAI(prompt) {
   return (data?.choices?.[0]?.message?.content || "").trim();
 }
 
+async function callGroq(prompt) {
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + API_KEY,
+    },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      max_tokens: 1024,
+      messages: [{ role: "user", content: prompt }],
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data?.error?.message || `Groq API error (${res.status})`);
+  return (data?.choices?.[0]?.message?.content || "").trim();
+}
+
 async function generateText(prompt) {
   if (!API_KEY) {
     throw new Error("Server has no API key configured. Set AI_API_KEY in Vercel Project Settings -> Environment Variables.");
   }
   if (PROVIDER === "gemini") return callGemini(prompt);
   if (PROVIDER === "openai") return callOpenAI(prompt);
+  if (PROVIDER === "groq") return callGroq(prompt);
   return callAnthropic(prompt);
 }
 
